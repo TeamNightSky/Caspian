@@ -1,11 +1,14 @@
 """Module for Scraper protocol."""
 
 import asyncio
+import contextlib
 import os
 import pathlib
 import urllib.parse
 import uuid
 from typing import Any, AsyncGenerator, Generator
+
+from caspian.models.song import Song
 
 
 def prepare_url(url: str) -> str:
@@ -23,12 +26,15 @@ def prepare_url(url: str) -> str:
 class Scraper:
     """Base class for scrapers."""
 
-    LOGS_DIR = "logs"
-    DOWNLOAD_DIR = "downloads"
+    LOGS_DIR = pathlib.Path("logs")
+    DOWNLOAD_DIR = pathlib.Path("downloads")
 
-    def __init__(self, url):
+    active_scrapers: dict[str, "Scraper"] = {}
+
+    def __init__(self, url: str):
         self.url = prepare_url(url)
         self.download_id = f"download-{uuid.uuid4()}"
+        self.process: asyncio.subprocess.Process | None = None
 
     @property
     def log_id(self) -> str:
@@ -38,7 +44,7 @@ class Scraper:
     @property
     def log_file(self) -> pathlib.Path:
         """Return the log file."""
-        path = pathlib.Path(self.LOGS_DIR, self.log_id)
+        path = self.LOGS_DIR / self.log_id
         if not path.parent.exists():
             path.parent.mkdir(parents=True)
         return path
@@ -46,7 +52,7 @@ class Scraper:
     @property
     def download_dir(self) -> pathlib.Path:
         """Return the download path."""
-        path = pathlib.Path(self.DOWNLOAD_DIR, self.download_id)
+        path = self.DOWNLOAD_DIR / self.download_id
         if not path.exists():
             path.mkdir(parents=True)
         return path
@@ -64,19 +70,29 @@ class Scraper:
         """Return the list of downloaded mp3 files."""
         return self.download_dir.glob("*.mp3")
 
-    async def run(self, timeout: int) -> AsyncGenerator[bytes, None]:
-        """Run the scraper."""
-        proc = await self.start(
-            self.log_file.open("wb"),
-            asyncio.subprocess.STDOUT,
-            None,
-        )
+    @contextlib.contextmanager
+    def active_scraper(self):
+        """Context manager for an active scraper."""
+        self.active_scrapers[self.download_id] = self
         try:
-            await asyncio.wait_for(proc.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
-            proc.kill()
+            yield
         finally:
-            for file in self.downloads():
-                yield file.read_bytes()
-                os.remove(file)
-            self.download_dir.rmdir()
+            del self.active_scrapers[self.download_id]
+
+    async def run(self, timeout: int) -> None:
+        """Run the scraper."""
+        with self.active_scraper():
+            self.process = await self.start(
+                self.log_file.open("wb"),
+                asyncio.subprocess.STDOUT,
+                None,
+            )
+            try:
+                await asyncio.wait_for(self.process.wait(), timeout=timeout)
+            except asyncio.TimeoutError:
+                self.process.kill()
+            for download in self.downloads():
+                Song(
+                    content=download.read_bytes(),
+                    upload_method="scraper",
+                )
