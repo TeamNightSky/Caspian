@@ -1,6 +1,9 @@
 [tool.isort]
 profile = "black"
 
+[tool.pylint.messages_control]
+disable = ["import-error"]
+
 [tool.poetry]
 name = "caspian"
 version = "0.1.0"
