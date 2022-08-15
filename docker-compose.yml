@@ -1,12 +1,21 @@
-# Usage
-#   Start:          docker-compose up
-#   With helpers:   docker-compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml up
-#   Stop:           docker-compose down
-#   Destroy:        docker-compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml down -v --remove-orphans
-
 version: "3.8"
 
 services:
+  caspian:
+    container_name: caspian-backend
+    build:
+      context: .
+      args:
+        DIR: ${BACKEND_VOLUME}
+    restart: unless-stopped
+    ports: 
+      - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
+    environment:
+      CASPIAN_PORT: ${CASPIAN_PORT}
+    volumes:
+      - ${BACKEND_VOLUME:-/dev/null}:/caspian_volume
+
+  # ==== The rest below this is supabase ====
   studio:
     container_name: supabase-studio
     image: supabase/studio:latest
