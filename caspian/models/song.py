@@ -1,6 +1,13 @@
 from datetime import datetime
-import statistics
 from pydantic import BaseModel
+
+
+
+class ImportProcess(BaseModel):
+    download_id: str
+    status: str
+    start_time: datetime = datetime.now()
+    end_time: datetime | None = None
 
 
 class ListeningStatistics(BaseModel):
@@ -9,7 +16,7 @@ class ListeningStatistics(BaseModel):
 
 
 class Song(BaseModel):
-    content: bytes
+    file_path: str
     date_added: datetime = datetime.now()
     statistics: ListeningStatistics = ListeningStatistics()
     source: str = "local"

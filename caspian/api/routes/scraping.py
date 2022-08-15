@@ -1,11 +1,12 @@
-from fastapi import APIRouter, UploadFile, BackgroundTasks, FileResponse
+from fastapi import APIRouter, UploadFile, BackgroundTasks
+from fastapi.responses import FileResponse
 from caspian.models.song import Song
 from caspian.scrapers import Scraper, YoutubeScraper, SpotifyScraper
 
 
 DOWNLOAD_TIMEOUT = 6 * 60 * 60  # 6 hours
 
-router = APIRouter("/import")
+router = APIRouter(prefix="/import")
 
 
 @router.post("/youtube")
@@ -40,7 +41,7 @@ async def download_status(download_id: str):
     return {"download_id": scraper.download_id, "status": scraper.process.returncode}
 
 
-@router.get("/downloads/{download_id}/log")
+@router.get("/active-downloads/{download_id}/log")
 async def download_log(download_id: str):
     if download_id not in Scraper.active_scrapers:
         return {"message": "Download not found"}
