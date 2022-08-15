@@ -12,6 +12,8 @@ license = "LGPL-3.0-or-later"
 python = "^3.10"
 spotdl = "^3.9.6"
 youtube_dl = "^2021.12.17"
+psycopg2 = "^2.9.3"
+Django = "^4.1"
 
 [tool.poetry.dev-dependencies]
 
