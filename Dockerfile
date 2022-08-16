@@ -1,22 +1,20 @@
-FROM python:3.10
+FROM python:3.10-slim AS build
 
-WORKDIR /caspian
-COPY . .
-
-ARG DIR
-
-RUN if [ ! -z $DIR ]; then echo /caspian_volume >> dir; else echo /caspian >> dir; fi
-
-RUN adduser --disabled-password app
-RUN chown -R app /caspian
-
-USER app
-
-RUN pip install -U poetry
-RUN python -m poetry config virtualenvs.in-project true --local
-
+WORKDIR "/app"
+COPY pyproject.toml poetry.lock ./
+RUN python3 -m venv .venv; \
+    . .venv/bin/activate; \
+    .venv/bin/pip3 install poetry; \
+    .venv/bin/python3 -m poetry install
 EXPOSE ${CASPIAN_PORT}
 
-USER root
+FROM build AS dev
+RUN ls
+ENTRYPOINT [ "./.venv/bin/python", "-m", "caspian" ]
 
-ENTRYPOINT sh docker-entrypoint.sh $(cat dir)
+
+FROM build AS prod
+COPY ./caspian ./caspian
+
+ENTRYPOINT [ "./.venv/bin/python", "-m", "caspian" ]
+

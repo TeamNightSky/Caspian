@@ -1,0 +1,12 @@
+.venv/
+docker/
+compose.yml
+Dockerfile
+LICENSE
+README.md
+TODO.md
+.gitignore
+.git/
+.gitattributes
+.gitmodules
+.dockerignore
