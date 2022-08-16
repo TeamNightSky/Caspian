@@ -16,7 +16,6 @@ services:
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
     environment:
       PORT: ${CASPIAN_PORT}
-      SUPABASE_URL: ${API_EXTERNAL_URL}
       SUPABASE_KEY: ${ANON_KEY}
     profiles:
       - dev
