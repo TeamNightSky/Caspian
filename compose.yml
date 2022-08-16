@@ -1,19 +1,33 @@
-version: "3.8"
-
 services:
-  caspian:
-    container_name: caspian-backend
+  caspian_dev:
+    container_name: caspian-dev
+    image: teamnightsky/caspian:latest
     build:
       context: .
-      args:
-        DIR: ${BACKEND_VOLUME}
+      target: dev
+    volumes:
+      - type: bind
+        source: ./caspian
+        target: /app/caspian
+        volume:
+          nocopy: true
     restart: unless-stopped
     ports: 
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
     environment:
-      CASPIAN_PORT: ${CASPIAN_PORT}
-    volumes:
-      - ${BACKEND_VOLUME:-/dev/null}:/caspian_volume
+      PORT: ${CASPIAN_PORT}
+      SUPABASE_KEY: ${ANON_KEY}
+    profiles:
+      - dev
+
+  caspian_prod:
+    container_name: caspian
+    image: teamnightsky/caspian:stable
+    build:
+      context: .
+      target: prod
+    profiles:
+      - prod
 
   # ==== The rest below this is supabase ====
   studio:
