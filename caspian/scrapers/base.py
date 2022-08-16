@@ -6,9 +6,9 @@ import os
 import pathlib
 import urllib.parse
 import uuid
-from typing import Any, AsyncGenerator, Generator
+from typing import Any, Generator
 
-from caspian.models.song import Song
+from caspian.schemas.song import Song
 
 
 def prepare_url(url: str) -> str:
@@ -35,6 +35,9 @@ class Scraper:
         self.url = prepare_url(url)
         self.download_id = f"download-{uuid.uuid4()}"
         self.process: asyncio.subprocess.Process | None = None
+
+    def __init_subclass__(cls, source: str) -> None:
+        cls.source = source
 
     @property
     def log_id(self) -> str:
@@ -93,6 +96,6 @@ class Scraper:
                 self.process.kill()
             for download in self.downloads():
                 Song(
-                    content=download.read_bytes(),
-                    upload_method="scraper",
+                    file_path="",  # supabase file bucket url
+                    upload_method=self.source,
                 )

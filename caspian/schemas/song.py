@@ -2,7 +2,6 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-
 class ImportProcess(BaseModel):
     download_id: str
     status: str

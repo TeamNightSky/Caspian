@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, BackgroundTasks
 from fastapi.responses import FileResponse
-from caspian.models.song import Song
+from caspian.schemas.song import Song
 from caspian.scrapers import Scraper, YoutubeScraper, SpotifyScraper
 
 

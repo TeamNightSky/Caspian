@@ -16,9 +16,9 @@ python = "^3.10"
 spotdl = "^3.9.6"
 youtube_dl = "^2021.12.17"
 fastapi = "^0.79.0"
-SQLAlchemy = "^1.4.40"
 uvicorn = "^0.18.2"
 python-multipart = "^0.0.5"
+supabase = "^0.5.8"
 
 [tool.poetry.dev-dependencies]
 

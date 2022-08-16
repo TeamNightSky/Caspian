@@ -4,7 +4,7 @@ import asyncio
 from caspian.scrapers.base import Scraper
 
 
-class YoutubeScraper(Scraper):
+class YoutubeScraper(Scraper, source="youtube"):
     """Scraper for Youtube."""
 
     async def start(

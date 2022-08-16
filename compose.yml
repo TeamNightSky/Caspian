@@ -8,7 +8,7 @@ services:
     volumes:
       - type: bind
         source: ./caspian
-        target: ./caspian
+        target: /app/caspian
         volume:
           nocopy: true
     restart: unless-stopped
@@ -16,13 +16,20 @@ services:
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
     environment:
       PORT: ${CASPIAN_PORT}
+      SUPABASE_URL: ${API_EXTERNAL_URL}
+      SUPABASE_KEY: ${ANON_KEY}
+    profiles:
+      - dev
+
   caspian_prod:
     container_name: caspian
     image: teamnightsky/caspian:stable
     build:
       context: .
       target: prod
-    
+    profiles:
+      - prod
+
   # ==== The rest below this is supabase ====
   studio:
     container_name: supabase-studio
