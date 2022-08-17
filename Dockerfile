@@ -10,11 +10,11 @@ EXPOSE ${CASPIAN_PORT}
 
 FROM build AS dev
 RUN ls
-ENTRYPOINT [ "./.venv/bin/python", "-m", "caspian" ]
+ENTRYPOINT [ "./.venv/bin/python", "-m", "api" ]
 
 
 FROM build AS prod
-COPY ./caspian ./caspian
+COPY ./api ./api
 
-ENTRYPOINT [ "./.venv/bin/python", "-m", "caspian" ]
+ENTRYPOINT [ "./.venv/bin/python", "-m", "api" ]
 

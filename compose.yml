@@ -1,14 +1,14 @@
 services:
-  caspian_dev:
-    container_name: caspian-dev
-    image: teamnightsky/caspian:dev
+  caspian_api_dev:
+    container_name: caspian-api-dev
+    image: teamnightsky/caspian-api:dev
     build:
       context: .
       target: dev
     volumes:
       - type: bind
-        source: ./caspian
-        target: /app/caspian
+        source: ./api
+        target: /app/api
         volume:
           nocopy: true
     restart: unless-stopped
@@ -20,9 +20,9 @@ services:
     profiles:
       - dev
 
-  caspian_prod:
-    container_name: caspian
-    image: teamnightsky/caspian:latest
+  caspian_api:
+    container_name: caspian-api
+    image: teamnightsky/caspian-api:latest
     restart: unless-stopped
     build:
       context: .

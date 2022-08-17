@@ -2,13 +2,12 @@
 
 import asyncio
 import contextlib
-import os
 import pathlib
 import urllib.parse
 import uuid
 from typing import Any, Generator
 
-from caspian.schemas.song import Song
+from api.db import DB
 
 
 def prepare_url(url: str) -> str:
@@ -95,7 +94,4 @@ class Scraper:
             except asyncio.TimeoutError:
                 self.process.kill()
             for download in self.downloads():
-                Song(
-                    file_path="",  # supabase file bucket url
-                    upload_method=self.source,
-                )
+                print(download[:50]) # TODO: add upload song file to database

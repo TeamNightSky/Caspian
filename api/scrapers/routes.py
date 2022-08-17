@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, BackgroundTasks
 from fastapi.responses import FileResponse
-from caspian.schemas.song import Song
-from caspian.scrapers import Scraper, YoutubeScraper, SpotifyScraper
+from api.scrapers import Scraper, YoutubeScraper, SpotifyScraper
 
 
 DOWNLOAD_TIMEOUT = 6 * 60 * 60  # 6 hours
@@ -25,7 +24,7 @@ async def spotify_scraper(url: str, background_tasks: BackgroundTasks):
 
 @router.post("/upload")
 async def upload_file(file: UploadFile):
-    Song(content=file.read(), upload_method="manual")
+    ... # TODO: upload file to database
 
 
 @router.get("/active-downloads")
