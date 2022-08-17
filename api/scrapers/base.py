@@ -94,4 +94,4 @@ class Scraper:
             except asyncio.TimeoutError:
                 self.process.kill()
             for download in self.downloads():
-                print(download[:50]) # TODO: add upload song file to database
+                print(download[:50])  # TODO: add upload song file to database

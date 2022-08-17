@@ -1,7 +1,7 @@
 """Module for scraping YouTube data."""
 import asyncio
 
-from caspian.scrapers.base import Scraper
+from api.scrapers.base import Scraper
 
 
 class YoutubeScraper(Scraper, source="youtube"):

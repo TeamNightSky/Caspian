@@ -2,7 +2,7 @@
 
 import asyncio
 
-from caspian.scrapers.base import Scraper
+from api.scrapers.base import Scraper
 
 
 class SpotifyScraper(Scraper, source="spotify"):
