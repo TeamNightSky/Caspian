@@ -12,6 +12,6 @@ The purpose of Caspian is to allow you to control your data, preferences, music,
 
 Caspian will use a fully open-source stack, currently planned to be as follows.
 
-- **Backend:** [Django](https://github.com/django/django) + [FastAPI](https://github.com/tiangolo/fastapi)
-- **Frontend:** [NextJS](https://github.com/vercel/next.js) + [NextUI](https://github.com/nextui-org/nextui)
-- **Database:** [Supabase](https://github.com/supabase/supabase)
+- **API:** [FastAPI](https://github.com/tiangolo/fastapi)
+- **Frontend:** [NextJS](https://github.com/vercel/next.js)
+- **Database:** [Self-Hosted Supabase](https://github.com/supabase/supabase)
