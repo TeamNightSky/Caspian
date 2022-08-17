@@ -1,20 +1,31 @@
 FROM python:3.10-slim AS build
 
-WORKDIR "/app"
+WORKDIR /app
 COPY pyproject.toml poetry.lock ./
+
 RUN python3 -m venv .venv; \
     . .venv/bin/activate; \
-    .venv/bin/pip3 install poetry; \
-    .venv/bin/python3 -m poetry install
+    python3 -m pip install poetry -q; \
+    python3 -m poetry export -o requirements.txt; \
+    deactivate; \
+    rm -rf .venv;
+
+
+FROM build as runtime
+
+RUN useradd -ms /bin/bash caspian_app
+USER caspian_app
+
+RUN python3 -m pip install -r requirements.txt --user --no-deps
 EXPOSE ${CASPIAN_PORT}
 
-FROM build AS dev
-RUN ls
-ENTRYPOINT [ "./.venv/bin/python", "-m", "api" ]
+FROM runtime AS caspian_api_dev
+RUN which python3
+ENTRYPOINT [ "python3", "-m", "api" ]
 
 
-FROM build AS prod
+FROM runtime AS caspian_api
 COPY ./api ./api
 
-ENTRYPOINT [ "./.venv/bin/python", "-m", "api" ]
+ENTRYPOINT [ "python3", "-m", "api" ]
 
