@@ -19,13 +19,13 @@ USER caspian_app
 RUN python3 -m pip install -r requirements.txt --user --no-deps
 EXPOSE ${CASPIAN_PORT}
 
+ENTRYPOINT [ "python3", "-m", "api" ]
+
+
 FROM runtime AS caspian_api_dev
 RUN which python3
-ENTRYPOINT [ "python3", "-m", "api" ]
 
 
 FROM runtime AS caspian_api
 COPY ./api ./api
-
-ENTRYPOINT [ "python3", "-m", "api" ]
 
