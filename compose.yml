@@ -1,7 +1,7 @@
 services:
   caspian_dev:
     container_name: caspian-dev
-    image: teamnightsky/caspian:latest
+    image: teamnightsky/caspian:dev
     build:
       context: .
       target: dev
@@ -22,10 +22,16 @@ services:
 
   caspian_prod:
     container_name: caspian
-    image: teamnightsky/caspian:stable
+    image: teamnightsky/caspian:latest
+    restart: unless-stopped
     build:
       context: .
       target: prod
+    ports: 
+      - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
+    environment:
+      PORT: ${CASPIAN_PORT}
+      SUPABASE_KEY: ${ANON_KEY}
     profiles:
       - prod
 

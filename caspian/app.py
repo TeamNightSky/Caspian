@@ -7,8 +7,3 @@ from caspian.db import DB
 app = FastAPI()
 app.mount("/api", scraping_router)
 
-
-@app.get("/")
-async def root():
-    DB.client.table
-    return {"message": "Hello World"}
