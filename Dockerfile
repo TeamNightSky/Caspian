@@ -1,6 +1,4 @@
-FROM python:alpine AS build
-
-RUN apk add --no-cache --update ffmpeg
+FROM python:3.10-slim as build
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
@@ -13,9 +11,10 @@ RUN python3 -m venv .venv; \
     deactivate; \
     rm -rf .venv;
 
+FROM jrottenberg/ffmpeg:5.1-ubuntu as ffmpeg
+
 FROM build as runtime
-RUN useradd -ms /bin/bash caspian_app
-USER caspian_app
+COPY --from=ffmpeg /usr/local /usr/local
 RUN python3 -m pip install -r requirements.txt --user --no-deps
 
 EXPOSE ${CASPIAN_PORT}
