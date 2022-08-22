@@ -166,7 +166,11 @@ services:
       REGION: stub
       GLOBAL_S3_BUCKET: stub
     volumes:
-      - ./docker/volumes/storage:/var/lib/storage
+      - type: bind
+        source: ./docker/volumes/storage
+        target: /var/lib/storage
+        volume:
+          nocopy: true
 
   meta:
     container_name: supabase-meta
@@ -193,5 +197,13 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      # - ./volumes/db/data:/var/lib/postgresql/data
-      - ./docker/volumes/db/init:/docker-entrypoint-initdb.d
+      - type: bind
+        source: ./docker/volumes/db/data
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
+      - type: bind
+        source: ./docker/volumes/db/init
+        target: /docker-entrypoint-initdb.d
+        volume:
+          nocopy: true

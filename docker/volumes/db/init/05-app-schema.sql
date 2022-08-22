@@ -1,57 +1,91 @@
-create schema if not exists app_schema authentication supabase_admin;
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = on;
 
-grant usage on schema storage to postgres, authenticated, service_role;
+SET default_tablespace = '';
+SET default_table_access_method = heap;
 
-/* Table of all songs (shared between users) */
-create app_schema.song_metadata (
-    "song_path" text UNIQUE,
-    "uuid" uuid default uuid_generate_v4(),
-    "title" text,
-    "artist" text,
-    "album" text,
-    "album_artist" text,
-    "year" integer,
-    "genre" text,
-    "duration" float,
-    "plays" integer,
-    "cover_path" text default null,
-    "source" text,
-    "created_at" timestamptz default current_timestamp,
-    "updated_at" timestamptz default current_timestamp,
-    primary key ("uuid")
+
+CREATE TABLE public.playlists (
+    uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    name text,
+    songs text[],
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
-/* Table of scraper logs */
-CREATE app_schema.scraper_logs (
-    "uuid" uuid default uuid_generate_v4() primary key,
-    "source" text,
-    "url" text,
-    "log_path" text,
-    "timestamp" timestamp default current_timestamp,
-    "status" integer,
+CREATE TABLE public.scraper_logs (
+    uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
+    source text,
+    original_source_url text,
+    log_path text,
+    "timestamp" timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    exit_code integer
 );
 
-/* Table of user-specific song-specific statistics */
-CREATE app_schema.song_stats (
-    "user_id" uuid UNIQUE,
-    "song_id" uuid UNIQUE,
-    "plays" integer default 0,
-    "liked" boolean default false,
-    "disliked" boolean default false,
-    primary key ("user_id", "song_id")
-    CONSTRAINT "user_playlists_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id")
-    CONSTRAINT "user_playlists_song_id_fkey" FOREIGN KEY ("song_id") REFERENCES "app_schema"."song_metadata"("uuid")
+
+CREATE TABLE public.song_metadata (
+    uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
+    title text,
+    artist text,
+    album text,
+    album_artist text,
+    year integer,
+    genre text,
+    duration double precision,
+    plays integer,
+    source text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
-/* Table of user playlists */
-CREATE app_schema.user_playlists (
-    "user_id" uuid UNIQUE,
-    "playlist_id" uuid UNIQUE default uuid_generate_v4(),
-    "name" text,
-    "cover_path" text default null,
-    "songs" text[],
-    "created_at" timestamptz default current_timestamp,
-    "updated_at" timestamptz default current_timestamp,
-    primary key ("playlist_id")
-    CONSTRAINT "user_playlists_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id")
+
+CREATE TABLE public.song_stats (
+    song_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    plays integer DEFAULT 0,
+    liked boolean DEFAULT false,
+    disliked boolean DEFAULT false
 );
+
+
+CREATE TABLE public.files(
+    
+)
+
+
+ALTER TABLE ONLY public.playlists
+    ADD CONSTRAINT playlists_pkey PRIMARY KEY (uuid, user_id);
+
+ALTER TABLE ONLY public.playlists
+    ADD CONSTRAINT playlists_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
+
+
+ALTER TABLE ONLY public.scraper_logs
+    ADD CONSTRAINT scraper_logs_pkey PRIMARY KEY (uuid);
+
+
+ALTER TABLE ONLY public.song_metadata
+    ADD CONSTRAINT song_metadata_pkey PRIMARY KEY (uuid);
+
+
+ALTER TABLE ONLY public.song_stats
+    ADD CONSTRAINT song_stats_pkey PRIMARY KEY (song_id, user_id);
+
+
+ALTER TABLE ONLY public.song_stats
+    ADD CONSTRAINT song_stats_song_id_fkey FOREIGN KEY (song_id) REFERENCES public.song_metadata(uuid);
+
+
+ALTER TABLE ONLY public.song_stats
+    ADD CONSTRAINT song_stats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
+
+
