@@ -154,7 +154,6 @@ class Scraper:
     async def upload_log(self, bucket: AsyncBucket) -> None:
         """Upload the log file to the database."""
         log_path = f"logs/{self.log_id}"
-        # TODO: Implement ansi2html
         await bucket.upload(log_path, self.log_file)
         await DB.postgrest.from_("scraper_logs").insert(
             {
