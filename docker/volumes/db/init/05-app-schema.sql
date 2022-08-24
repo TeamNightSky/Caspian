@@ -34,6 +34,8 @@ CREATE TABLE public.scraper_logs (
 
 CREATE TABLE public.song_metadata (
     uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
+    liked boolean DEFAULT false,
+    disliked boolean DEFAULT false,
     audio_path text,
     cover_path text,
     title text,
@@ -43,20 +45,17 @@ CREATE TABLE public.song_metadata (
     year integer,
     genre text,
     duration double precision,
-    plays integer DEFAULT 0,
     source text NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
-CREATE TABLE public.song_stats (
-    song_id uuid NOT NULL,
+CREATE TABLE public.plays (
     user_id uuid NOT NULL,
-    plays integer DEFAULT 0,
-    liked boolean DEFAULT false,
-    disliked boolean DEFAULT false
-);
+    song_id uuid NOT NULL,
+    "timestamp" timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+)
 
 
 ALTER TABLE ONLY public.playlists
@@ -74,14 +73,12 @@ ALTER TABLE ONLY public.song_metadata
     ADD CONSTRAINT song_metadata_pkey PRIMARY KEY (uuid);
 
 
-ALTER TABLE ONLY public.song_stats
-    ADD CONSTRAINT song_stats_pkey PRIMARY KEY (song_id, user_id);
+ALTER TABLE ONLY public.plays
+    ADD CONSTRAINT plays_pkey PRIMARY KEY (song_id, user_id);
+
+ALTER TABLE ONLY public.plays
+    ADD CONSTRAINT plays_song_id_fkey FOREIGN KEY (song_id) REFERENCES public.song_metadata(uuid);
 
 
-ALTER TABLE ONLY public.song_stats
-    ADD CONSTRAINT song_stats_song_id_fkey FOREIGN KEY (song_id) REFERENCES public.song_metadata(uuid);
-
-
-ALTER TABLE ONLY public.song_stats
-    ADD CONSTRAINT song_stats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
-
+ALTER TABLE ONLY public.plays
+    ADD CONSTRAINT plays_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
