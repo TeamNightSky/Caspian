@@ -43,7 +43,7 @@ CREATE TABLE public.song_metadata (
     year integer,
     genre text,
     duration double precision,
-    plays integer,
+    plays integer DEFAULT 0,
     source text NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
