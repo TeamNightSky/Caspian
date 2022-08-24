@@ -11,6 +11,16 @@ services:
         target: /app/api
         volume:
           nocopy: true
+      - type: bind
+        source: ./logs
+        target: /app/logs
+        volume:
+          nocopy: true
+      - type: bind
+        source: ./downloads
+        target: /app/downloads
+        volume:
+          nocopy: true
     restart: unless-stopped
     ports: 
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
