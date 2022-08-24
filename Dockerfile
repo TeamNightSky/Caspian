@@ -22,14 +22,9 @@ RUN python3 -m venv .venv; \
 ENV PATH=$PATH:/root/.local/bin
 RUN python3 -m pip install -q -r requirements.txt --no-deps --user
 
-FROM dependencies as runtime
+FROM dependencies as caspian_api
 EXPOSE ${CASPIAN_PORT}
+COPY ./api /app/api
 ENTRYPOINT [ "python3", "-m", "api" ]
 
-
-FROM runtime AS caspian_api_dev
-ENV CASPIAN_DEBUG=true
-
-FROM runtime AS caspian_api
-COPY ./api ./api
 

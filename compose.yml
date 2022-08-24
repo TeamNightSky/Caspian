@@ -1,10 +1,10 @@
 services:
-  caspian_api_dev:
-    container_name: caspian-api-dev
+  caspian_api:
+    container_name: caspian-api
     image: teamnightsky/caspian-api:dev
     build:
       context: .
-      target: caspian_api_dev
+      target: caspian_api
     volumes:
       - type: bind
         source: ./api
@@ -29,25 +29,7 @@ services:
       SUPABASE_KEY: ${SERVICE_ROLE_KEY}
       POSTGREST_URL: http://rest:3000
       STORAGE_URL: http://storage:5000
-    profiles:
-      - dev
-
-  caspian_api:
-    container_name: caspian-api
-    image: teamnightsky/caspian-api:latest
-    restart: unless-stopped
-    build:
-      context: .
-      target: caspian_api
-    ports: 
-      - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
-    environment:
-      PORT: ${CASPIAN_PORT}
-      SUPABASE_KEY: ${SERVICE_ROLE_KEY}
-      POSTGREST_URL: http://rest:3000
-      STORAGE_URL: http://storage:5000
-    profiles:
-      - prod
+      CASPIAN_API: true
 
   # ==== The rest below this is supabase ====
   studio:
