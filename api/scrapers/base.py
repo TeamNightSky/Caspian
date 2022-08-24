@@ -2,12 +2,32 @@
 
 import asyncio
 import contextlib
+import os
 import pathlib
+import tempfile
 import urllib.parse
 import uuid
 from typing import Any, Generator
 
+import audio_metadata
+from storage3._async.bucket import AsyncBucket
+
 from api.db import DB
+
+
+def get_metadata(download: pathlib.Path) -> dict[str, Any]:
+    """Return the metadata for the downloaded mp3 file."""
+    song = audio_metadata.load(download)
+    return {
+        "title": song.tags.title[0] if song.tags.get("title", []) else None,
+        "artist": song.tags.artist[0] if song.tags.get("artist", []) else None,
+        "album": song.tags.album[0] if song.tags.get("album", []) else None,
+        "album_artist": song.tags.album_artist[0] if song.tags.get("album_artist", []) else None,
+        "year": song.tags.year[0] if song.tags.get("year", []) else None,
+        "genre": song.tags.genre[0] if song.tags.get("genre", []) else None,
+        "duration": float(song.streaminfo.get("duration", "0.0")),
+        "cover": song.pictures[0].data if song.get("pictures", []) else None,
+    }
 
 
 def prepare_url(url: str) -> str:
@@ -73,17 +93,18 @@ class Scraper:
         return self.download_dir.glob("*.mp3")
 
     @contextlib.contextmanager
-    def active_scraper(self):
+    def active(self):
         """Context manager for an active scraper."""
-        self.active_scrapers[self.download_id] = self
+        Scraper.active_scrapers[self.download_id] = self
         try:
             yield
         finally:
-            del self.active_scrapers[self.download_id]
+            del Scraper.active_scrapers[self.download_id]
 
     async def run(self, timeout: int) -> None:
         """Run the scraper."""
-        with self.active_scraper():
+        print("Downloading...", self.url)
+        with self.active():
             self.process = await self.start(
                 self.log_file.open("wb"),
                 asyncio.subprocess.STDOUT,
@@ -93,5 +114,51 @@ class Scraper:
                 await asyncio.wait_for(self.process.wait(), timeout=timeout)
             except asyncio.TimeoutError:
                 self.process.kill()
-            for download in self.downloads():
-                print(download[:50])  # TODO: add upload song file to database
+            except Exception as exc:
+                self.process.kill()
+                raise exc from None
+            finally:
+                await self.upload()
+
+    async def upload(self) -> None:
+        """Upload the downloaded mp3 files and logs to the database."""
+        bucket = await DB.storage.get_bucket("files")
+        for path in self.downloads():
+            await self.upload_download(bucket, path)
+            os.remove(path)
+        await self.upload_log(bucket)
+        os.rmdir(self.download_dir)
+
+    async def upload_download(self, bucket: AsyncBucket, path: pathlib.Path) -> None:
+        """Upload the downloaded mp3 file to the database."""
+        audio_path, cover_path, metadata = (
+            f"songs/{uuid.uuid4()}.mp3",
+            f"covers/{uuid.uuid4()}.jpg",
+            get_metadata(path),
+        )
+        if cover_data := metadata.pop("cover"):
+            with tempfile.NamedTemporaryFile() as tmp:
+                tmp.write(cover_data)
+                tmp.flush()
+                await bucket.upload(cover_path, tmp.name)
+        else:
+            cover_path = None
+        metadata.update(
+            source=self.source,
+            audio_path=audio_path,
+            cover_path=cover_path,
+        )
+        await bucket.upload(audio_path, path)
+        await DB.postgrest.from_("song_metadata").insert(metadata).execute()
+
+    async def upload_log(self, bucket: AsyncBucket) -> None:
+        """Upload the log file to the database."""
+        log_path = f"logs/{self.log_id}"
+        await bucket.upload(log_path, self.log_file)
+        await DB.postgrest.from_("scraper_logs").insert(
+            {
+                "source": self.source,
+                "content_path": log_path,
+                "exit_code": self.process.returncode,
+            }
+        ).execute()

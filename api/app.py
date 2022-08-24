@@ -13,25 +13,26 @@ router = APIRouter(prefix="/import")
 @router.post("/youtube")
 async def youtube_scraper(url: str, background_tasks: BackgroundTasks):
     scraper = YoutubeScraper(url)
-    background_tasks.add_task(scraper.run(DOWNLOAD_TIMEOUT))
-    return {"download_id": scraper.download_id}
+    background_tasks.add_task(scraper.run, DOWNLOAD_TIMEOUT)
+    return {"download_id": scraper.download_id, "url": scraper.url, "status": "ok"}
 
 
 @router.post("/spotify")
 async def spotify_scraper(url: str, background_tasks: BackgroundTasks):
     scraper = SpotifyScraper(url)
-    background_tasks.add_task(scraper.run(DOWNLOAD_TIMEOUT))
-    return {"download_id": scraper.download_id}
+    background_tasks.add_task(scraper.run, DOWNLOAD_TIMEOUT)
+    return {"download_id": scraper.download_id, "url": scraper.url, "status": "ok"}
 
 
 @router.post("/upload")
-async def upload_file(file: UploadFile):
-    ...  # TODO: upload file to database
+async def upload_file(file: UploadFile, background_tasks: BackgroundTasks):
+    background_tasks.add_task(DB.upload_song, file.read(), "manual")
+    return {"status": "ok"}
 
 
 @router.get("/active-downloads")
 async def downloads_lists() -> dict[str, str]:
-    return {scraper.url: scraper.download_dir for scraper in Scraper.active_scrapers}
+    return {scraper.download_dir:scraper.url for scraper in Scraper.active_scrapers.values()}
 
 
 @router.get("/active-downloads/{download_id}")
@@ -52,3 +53,17 @@ async def download_log(download_id: str):
 
 app = FastAPI()
 app.mount("/api", router)
+
+
+@app.on_event("startup")
+async def startup():
+    for bucket in await DB.storage.list_buckets():
+        if bucket.name == "files":
+            return
+    await DB.storage.create_bucket("files")
+
+
+@app.get("/")
+async def root():
+    import socket
+    return socket.gethostbyname('storage')

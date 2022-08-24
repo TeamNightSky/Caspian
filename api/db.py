@@ -1,10 +1,21 @@
 import os
 
-from supabase import Client, create_client
+from postgrest import AsyncPostgrestClient
+from storage3 import AsyncStorageClient
 
 
 class DB:
-    client: Client = create_client(
-        "0.0.0.0",
-        os.environ["SUPABASE_KEY"],
+    headers = {
+        "Authorization": f"Bearer {os.environ['SUPABASE_KEY']}",
+        "apiKey": os.environ["SUPABASE_KEY"],
+    }
+
+    postgrest = AsyncPostgrestClient(
+        os.environ["POSTGREST_URL"],
+        headers=headers,
+    )
+
+    storage = AsyncStorageClient(
+        os.environ["STORAGE_URL"],
+        headers=headers,
     )

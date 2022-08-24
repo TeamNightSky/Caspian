@@ -17,6 +17,7 @@ CREATE TABLE public.playlists (
     uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
     user_id uuid NOT NULL,
     name text,
+    cover_file text,
     songs text[],
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
@@ -25,8 +26,7 @@ CREATE TABLE public.playlists (
 CREATE TABLE public.scraper_logs (
     uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
     source text,
-    original_source_url text,
-    log_path text,
+    content_path text,
     "timestamp" timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     exit_code integer
 );
@@ -34,6 +34,8 @@ CREATE TABLE public.scraper_logs (
 
 CREATE TABLE public.song_metadata (
     uuid uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
+    audio_path text,
+    cover_path text,
     title text,
     artist text,
     album text,
@@ -55,11 +57,6 @@ CREATE TABLE public.song_stats (
     liked boolean DEFAULT false,
     disliked boolean DEFAULT false
 );
-
-
-CREATE TABLE public.files(
-    
-)
 
 
 ALTER TABLE ONLY public.playlists
@@ -87,5 +84,4 @@ ALTER TABLE ONLY public.song_stats
 
 ALTER TABLE ONLY public.song_stats
     ADD CONSTRAINT song_stats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
-
 
