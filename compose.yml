@@ -26,7 +26,7 @@ services:
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
     environment:
       PORT: ${CASPIAN_PORT}
-      SUPABASE_KEY: ${ANON_KEY}
+      SUPABASE_KEY: ${SERVICE_ROLE_KEY}
     profiles:
       - dev
 
