@@ -107,7 +107,7 @@ services:
     container_name: supabase-rest
     image: postgrest/postgrest:v9.0.0
     depends_on:
-      - db # Disable this if you are using an external Postgres database
+      - db
     restart: unless-stopped
     environment:
       PGRST_DB_URI: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
@@ -120,7 +120,7 @@ services:
     container_name: supabase-realtime
     image: supabase/realtime:v0.22.4
     depends_on:
-      - db # Disable this if you are using an external Postgres database
+      - db
     restart: unless-stopped
     environment:
       DB_HOST: ${POSTGRES_HOST}
@@ -144,7 +144,7 @@ services:
     container_name: supabase-storage
     image: supabase/storage-api:v0.10.0
     depends_on:
-      - db # Disable this if you are using an external Postgres database
+      - db
       - rest
     restart: unless-stopped
     environment:
@@ -172,7 +172,7 @@ services:
     container_name: supabase-meta
     image: supabase/postgres-meta:v0.29.0
     depends_on:
-      - db # Disable this if you are using an external Postgres database
+      - db
     restart: unless-stopped
     environment:
       PG_META_PORT: 8080
@@ -182,7 +182,6 @@ services:
       PG_META_DB_USER: ${POSTGRES_USER}
       PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
 
-  # Comment out everything below this point if you are using an external Postgres database
   db:
     container_name: supabase-db
     image: supabase/postgres:14.1.0.21
