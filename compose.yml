@@ -43,7 +43,9 @@ services:
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
     environment:
       PORT: ${CASPIAN_PORT}
-      SUPABASE_KEY: ${ANON_KEY}
+      SUPABASE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      STORAGE_URL: http://storage:5000
     profiles:
       - prod
 
