@@ -55,11 +55,12 @@ CREATE TABLE public.plays (
     user_id uuid NOT NULL,
     song_id uuid NOT NULL,
     "timestamp" timestamp with time zone DEFAULT CURRENT_TIMESTAMP
-)
+);
 
 
 ALTER TABLE ONLY public.playlists
     ADD CONSTRAINT playlists_pkey PRIMARY KEY (uuid, user_id);
+
 
 ALTER TABLE ONLY public.playlists
     ADD CONSTRAINT playlists_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
@@ -75,6 +76,7 @@ ALTER TABLE ONLY public.song_metadata
 
 ALTER TABLE ONLY public.plays
     ADD CONSTRAINT plays_pkey PRIMARY KEY (song_id, user_id);
+
 
 ALTER TABLE ONLY public.plays
     ADD CONSTRAINT plays_song_id_fkey FOREIGN KEY (song_id) REFERENCES public.song_metadata(uuid);

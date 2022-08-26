@@ -29,7 +29,7 @@ services:
       SUPABASE_KEY: ${SERVICE_ROLE_KEY}
       POSTGREST_URL: http://rest:3000
       STORAGE_URL: http://storage:5000
-      CASPIAN_API: true
+      CASPIAN_DEBUG: ${CASPIAN_DEBUG}
 
   # ==== The rest below this is supabase ====
   studio:
