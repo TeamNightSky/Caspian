@@ -61,9 +61,3 @@ async def startup():
         if bucket.name == "files":
             return
     await DB.storage.create_bucket("files")
-
-
-@app.get("/")
-async def root():
-    import socket
-    return socket.gethostbyname('storage')
