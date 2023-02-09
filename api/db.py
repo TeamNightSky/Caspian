@@ -24,14 +24,16 @@ class RawDB:
         headers=headers,
     )
 
+    files = storage.get_bucket("files")
+
 
 class DB(RawDB):
     """
     Wrapper class for RawDB which implements basic functions.
     """
-    async def upload_song(self, f: io.BytesIO, source: str):
+    async def upload_song(self, f: io.FileIO, source: str):
         """
         Upload a song to the database.
         """
-        # Gonna have to implement uploads in storage-py
-        self.storage._request("POST", f"/object/files/{source}--{f.name}")
+        await self.files.upload(f"files/{source}/{f.name}", f)
+        # Potentially autogenerate a uuid to store it under
