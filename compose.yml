@@ -17,10 +17,11 @@ services:
         volume:
           nocopy: true
       - type: bind
-        source: ./downloads
+        source: ./docker/volumes/downloads
         target: /app/downloads
         volume:
           nocopy: true
+      - ./docker/volumes/api:/var/lib/kong
     restart: unless-stopped
     ports: 
       - ${CASPIAN_PORT}:${CASPIAN_PORT}/tcp
@@ -30,6 +31,11 @@ services:
       POSTGREST_URL: http://rest:3000
       STORAGE_URL: http://storage:5000
       CASPIAN_DEBUG: ${CASPIAN_DEBUG}
+    depends_on:
+      - rest
+      - storage
+      - db
+      - kong
 
   # ==== The rest below this is supabase ====
   studio:

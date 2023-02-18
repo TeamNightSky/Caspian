@@ -1,3 +1,6 @@
+import os
+import asyncio
+
 from fastapi import APIRouter, BackgroundTasks, FastAPI, UploadFile
 from fastapi.responses import FileResponse
 
@@ -68,17 +71,30 @@ async def download_log(download_id: str):
     scraper = Scraper.active_scrapers[download_id]
     return FileResponse(scraper.log_file, media_type="text/plain")
 
-
 app = FastAPI()
 app.mount("/api", router)
 
+@app.get("/getkey")
+async def getkey():
+    """
+    Method for client to get credentials
+    """
+    return {"URL": os.environ["STORAGE_URL"], "KEY": DB.public_key}
 
 @app.on_event("startup")
 async def startup():
     """
     Initialize the storage buckets
     """
-    for bucket in await DB.storage.list_buckets():
-        if bucket.name == "files":
-            return
-    await DB.storage.create_bucket("files")
+    while True:
+        try:
+            for bucket in (await DB.storage.list_buckets()):
+                if bucket.name == "files":
+                    print("Bucket found.")
+                    return
+            await DB.storage.create_bucket("files")
+            print("Created bucket.")
+            break
+        except:  # If you are gonna complain, fix it yourself
+            print("Storage not launched. Retrying...")
+            asyncio.sleep(1)

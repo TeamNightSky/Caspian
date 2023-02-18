@@ -6,10 +6,10 @@
 - [ ] Songs
 - [ ] Metadata Editor
 - [ ] Auto song metadata downloading
-- [ ] Music Streaming api
-- [ ] Metadata api
+- [X] ~~Music Streaming api~~ (supabase buckets)
+- [X] ~~Metadata api~~
 - [ ] Song database, + indexing
 - [ ] Listening statistics db + api
 - [ ] Self-hosted recommendations
-- [ ] import from page, YT, Spotify, (Drive?), Upload (Songs, Playlists, Albums)
+- [ ] import from page, ~~YT, Spotify,~~ (Drive?), ~~Upload (Songs, Playlists, Albums)~~
 - [ ] Import api endpoint

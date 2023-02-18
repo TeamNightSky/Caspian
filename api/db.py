@@ -1,5 +1,7 @@
 import os
 import io
+import asyncio
+import yaml
 
 from postgrest import AsyncPostgrestClient
 from storage3 import AsyncStorageClient
@@ -24,7 +26,22 @@ class RawDB:
         headers=headers,
     )
 
-    files = storage.get_bucket("files")
+    files_ = None
+
+    @classmethod
+    @property
+    def files(cls):
+        """
+        Get files bucket
+        """
+        if cls.files_:
+            return cls.files_
+        cls._files = asyncio.run(cls.storage.get_bucket("files"))
+        return cls.files
+
+    public_key = yaml.safe_load(
+        open("/var/lib/kong/kong.yml", "r").read()
+    )["consumers"][1]["keyauth_credentials"][0]["key"]
 
 
 class DB(RawDB):
@@ -35,5 +52,5 @@ class DB(RawDB):
         """
         Upload a song to the database.
         """
+        # No metadata moment
         await self.files.upload(f"files/{source}/{f.name}", f)
-        # Potentially autogenerate a uuid to store it under
