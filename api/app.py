@@ -2,6 +2,7 @@ import os
 import asyncio
 
 from fastapi import APIRouter, BackgroundTasks, FastAPI, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from api.db import DB
@@ -72,6 +73,14 @@ async def download_log(download_id: str):
     return FileResponse(scraper.log_file, media_type="text/plain")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.mount("/api", router)
 
 @app.get("/getkey")
@@ -79,7 +88,7 @@ async def getkey():
     """
     Method for client to get credentials
     """
-    return {"URL": os.environ["STORAGE_URL"], "KEY": DB.public_key}
+    return {"URL": os.getenv("CASPIAN_DOMAIN"), "KEY": DB.public_key}
 
 @app.on_event("startup")
 async def startup():
@@ -97,4 +106,4 @@ async def startup():
             break
         except:  # If you are gonna complain, fix it yourself
             print("Storage not launched. Retrying...")
-            asyncio.sleep(1)
+            await asyncio.sleep(1)

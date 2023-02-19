@@ -1,4 +1,4 @@
-services:
+ services:
   caspian_api:
     container_name: caspian-api
     image: teamnightsky/caspian-api:dev
@@ -31,6 +31,7 @@ services:
       POSTGREST_URL: http://rest:3000
       STORAGE_URL: http://storage:5000
       CASPIAN_DEBUG: ${CASPIAN_DEBUG}
+      CASPIAN_DOMAIN: ${EXTERNAL_DOMAIN}
     depends_on:
       - rest
       - storage
@@ -49,7 +50,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
       SUPABASE_URL: http://kong:8000
-      SUPABASE_REST_URL: ${PUBLIC_REST_URL}
+      SUPABASE_REST_URL: ${EXTERNAL_DOMAIN}${PUBLIC_REST_URL}
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
 
