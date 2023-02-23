@@ -8,7 +8,7 @@ class YoutubeScraper(Scraper, source="youtube"):
     """Scraper for Youtube."""
 
     async def start(
-        self,stdout, stderr, stdin,
+        self, stdout, stderr, stdin
     ) -> asyncio.subprocess.Process:  # pylint: disable=no-member
         """Starts the YouTube scraper subprocess."""
         return await asyncio.create_subprocess_shell(
