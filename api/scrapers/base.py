@@ -22,7 +22,9 @@ def get_metadata(download: pathlib.Path) -> dict[str, Any]:
         "title": song.tags.title[0] if song.tags.get("title", []) else None,
         "artist": song.tags.artist[0] if song.tags.get("artist", []) else None,
         "album": song.tags.album[0] if song.tags.get("album", []) else None,
-        "album_artist": song.tags.album_artist[0] if song.tags.get("album_artist", []) else None,
+        "album_artist": song.tags.album_artist[0]
+        if song.tags.get("album_artist", [])
+        else None,
         "year": song.tags.year[0] if song.tags.get("year", []) else None,
         "genre": song.tags.genre[0] if song.tags.get("genre", []) else None,
         "duration": float(song.streaminfo.get("duration", "0.0")),
@@ -52,7 +54,7 @@ class Scraper:
 
     def __init__(self, url: str):
         self.url = prepare_url(url)
-        self.download_id = f"download-{uuid.uuid4()}"
+        self.job_id = f"download-{uuid.uuid4()}"
         self.process: asyncio.subprocess.Process | None = None
 
     def __init_subclass__(cls, source: str) -> None:
@@ -61,7 +63,7 @@ class Scraper:
     @property
     def log_id(self) -> str:
         """Return the log id."""
-        return f"{self.download_id}.log"
+        return f"{self.job_id}.log"
 
     @property
     def log_file(self) -> pathlib.Path:
@@ -74,7 +76,7 @@ class Scraper:
     @property
     def download_dir(self) -> pathlib.Path:
         """Return the download path."""
-        path = self.DOWNLOAD_DIR / self.download_id
+        path = self.DOWNLOAD_DIR / self.job_id
         if not path.exists():
             path.mkdir(parents=True)
         return path
@@ -95,11 +97,11 @@ class Scraper:
     @contextlib.contextmanager
     def active(self):
         """Context manager for an active scraper."""
-        Scraper.active_scrapers[self.download_id] = self
+        Scraper.active_scrapers[self.job_id] = self
         try:
             yield
         finally:
-            del Scraper.active_scrapers[self.download_id]
+            del Scraper.active_scrapers[self.job_id]
 
     async def run(self, timeout: int) -> None:
         """Run the scraper."""

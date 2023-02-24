@@ -13,7 +13,11 @@ class SpotifyScraper(Scraper, source="spotify"):
     ) -> asyncio.subprocess.Process:  # pylint: disable=no-member
         """Start the scraper subprocess"""
         return await asyncio.create_subprocess_shell(
-            f'spotdl "{self.url}" --path-template "{self.download_dir}/{{artist}} - {{title}}.{{ext}}"',
+            (
+                "spotdl "
+                f'"{self.url}" '
+                f'--path-template "{self.download_dir}/{{artist}} - {{title}}.{{ext}}"'
+            ),
             stdin=stdin,
             stdout=stdout,
             stderr=stderr,

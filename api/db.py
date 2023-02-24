@@ -11,6 +11,7 @@ class RawDB:
     """
     Base class for the DB, contains headers and clients.
     """
+
     headers = {
         "Authorization": f"Bearer {os.environ['SUPABASE_KEY']}",
         "apiKey": os.environ["SUPABASE_KEY"],
@@ -39,15 +40,16 @@ class RawDB:
         cls._files = asyncio.run(cls.storage.get_bucket("files"))
         return cls.files
 
-    public_key = yaml.safe_load(
-        open("/var/lib/kong/kong.yml", "r").read()
-    )["consumers"][1]["keyauth_credentials"][0]["key"]
+    public_key = yaml.safe_load(open("/var/lib/kong/kong.yml", "r").read())[
+        "consumers"
+    ][1]["keyauth_credentials"][0]["key"]
 
 
 class DB(RawDB):
     """
     Wrapper class for RawDB which implements basic functions.
     """
+
     async def upload_song(self, f: io.FileIO, source: str):
         """
         Upload a song to the database.
