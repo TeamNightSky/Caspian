@@ -1,4 +1,2 @@
-volumes/db/data
 volumes/db/init/data.sql
-volumes/storage
 test.http
