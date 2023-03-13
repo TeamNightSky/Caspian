@@ -41,7 +41,7 @@
   # ==== The rest below this is supabase ====
   studio:
     container_name: supabase-studio
-    image: supabase/studio:latest
+    image: supabase/studio:20230228-029c7bd  # Latest is broken as of 03/13/2023
     restart: unless-stopped
     ports:
       - ${STUDIO_PORT}:3000/tcp

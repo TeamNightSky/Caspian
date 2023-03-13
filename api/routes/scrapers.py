@@ -18,7 +18,7 @@ async def youtube_scraper(url: str, background_tasks: BackgroundTasks):
     """
     scraper = YoutubeScraper(url)
     background_tasks.add_task(scraper.run, DOWNLOAD_TIMEOUT)
-    return {"download_id": scraper.download_id, "url": scraper.url, "status": "ok"}
+    return {"download_id": scraper.job_id, "url": scraper.url, "status": "ok"}
 
 
 @router.post("/spotify")
@@ -28,7 +28,7 @@ async def spotify_scraper(url: str, background_tasks: BackgroundTasks):
     """
     scraper = SpotifyScraper(url)
     background_tasks.add_task(scraper.run, DOWNLOAD_TIMEOUT)
-    return {"download_id": scraper.download_id, "url": scraper.url, "status": "ok"}
+    return {"download_id": scraper.job_id, "url": scraper.url, "status": "ok"}
 
 
 @router.post("/upload")
