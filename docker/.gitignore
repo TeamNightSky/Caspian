@@ -1,2 +1,3 @@
 volumes/db/init/data.sql
+volumes/db/data
 test.http

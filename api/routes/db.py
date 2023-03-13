@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from api.db import DB
 
