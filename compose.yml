@@ -6,21 +6,9 @@
       context: .
       target: caspian_api
     volumes:
-      - type: bind
-        source: ./api
-        target: /app/api
-        volume:
-          nocopy: true
-      - type: bind
-        source: ./logs
-        target: /app/logs
-        volume:
-          nocopy: true
-      - type: bind
-        source: ./docker/volumes/downloads
-        target: /app/downloads
-        volume:
-          nocopy: true
+      - ./api:/app/api
+      - ./logs:/app/logs
+      - ./docker/volumes/downloads:/app/downloads
       - ./docker/volumes/api:/var/lib/kong
     restart: unless-stopped
     ports: 
@@ -32,13 +20,32 @@
       STORAGE_URL: http://storage:5000
       CASPIAN_DEBUG: ${CASPIAN_DEBUG}
       CASPIAN_DOMAIN: ${EXTERNAL_DOMAIN}
+      CELERY_BACKEND_URL: redis://celery_backend:6379/0
+      CELERY_BROKER_URL: amqp://celery_broker:5672
+      CELERY_RESULT_BACKEND_URL: redis://celery_backend:6379/0
     depends_on:
       - rest
       - storage
       - db
       - kong
+  
+  caspian_worker:
+    build:
+      context: .
+      target: caspian_worker
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
 
-  # ==== The rest below this is supabase ====
+  celery_broker:
+    image: rabbitmq:latest
+  
+  celery_backend:
+    image: redis:latest
+
   studio:
     container_name: supabase-studio
     image: supabase/studio:20230228-029c7bd  # Latest is broken as of 03/13/2023
@@ -48,7 +55,6 @@
     environment:
       STUDIO_PG_META_URL: http://meta:8080
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
       SUPABASE_URL: http://kong:8000
       SUPABASE_REST_URL: ${EXTERNAL_DOMAIN}${PUBLIC_REST_URL}
       SUPABASE_ANON_KEY: ${ANON_KEY}
