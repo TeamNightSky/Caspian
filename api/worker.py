@@ -1,5 +1,6 @@
 """Celery app for scraping and saving data to database."""
 
+import glob
 import io
 import os
 import tempfile
@@ -15,6 +16,7 @@ import argparse
 import yt_dlp
 from spotdl.console import console_entry_point as spotdl
 
+from .models import Song, Artist, User, Session
 
 app = Celery(
     "scraper",
@@ -24,16 +26,19 @@ app = Celery(
 app.conf.result_backend = os.environ["CELERY_RESULT_BACKEND_URL"]
 
 
-def get_metadata(download: io.BytesIO) -> dict[str, Any]:
+def get_metadata(download: bytes) -> dict[str, Any]:
     """Return the metadata for the downloaded mp3 file."""
-    song = audio_metadata.load(download)
+    with tempfile.NamedTemporaryFile() as tmp:
+        tmp.write(download)
+        tmp.flush()
+        song = audio_metadata.load(tmp.name)
     return {
         "title": song.tags.title[0] if song.tags.get("title", []) else None,
         "artist": song.tags.artist[0] if song.tags.get("artist", []) else None,
-        "album": song.tags.album[0] if song.tags.get("album", []) else None,
-        "album_artist": song.tags.album_artist[0]
-        if song.tags.get("album_artist", [])
-        else None,
+        # "album": song.tags.album[0] if song.tags.get("album", []) else None,
+        # "album_artist": song.tags.album_artist[0]
+        # if song.tags.get("album_artist", [])
+        # else None,
         "year": song.tags.year[0] if song.tags.get("year", []) else None,
         "genre": song.tags.genre[0] if song.tags.get("genre", []) else None,
         "duration": float(song.streaminfo.get("duration", "0.0")),
@@ -46,46 +51,50 @@ def prepare_url(url: str) -> str:
     return (
         urllib.parse.urlparse(url)
         ._replace(
-            scheme="https", # Force HTTPS
-            fragment="", # Remove fragment
+            scheme="https",  # Force HTTPS
+            fragment="",  # Remove fragment
         )
         .geturl()
     )
 
 
 @app.task
-def scrape_youtube(url: str):
+def scrape_youtube(url: str, user_id: str):
     """Scrape a YouTube video."""
     with tempfile.TemporaryDirectory() as tmp:
         try:
-            yt_dlp.main([
-                "--add-metadata",
-                "--yes-playlist",
-                "-x",
-                "--audio-format=mp3",
-                "--audio-quality=0",
-                "--retries=infinite",
-                "--socket-timeout=30",
-                "--prefer-ffmpeg",
-                "--no-call-home",
-                "-i",
-                f'--output={tmp}/%(channel)s - %(title)s.%(ext)s',
-                url]
+            yt_dlp.main(
+                [
+                    "--add-metadata",
+                    "--yes-playlist",
+                    "-x",
+                    "--audio-format=mp3",
+                    "--audio-quality=0",
+                    "--retries=infinite",
+                    "--socket-timeout=30",
+                    "--prefer-ffmpeg",
+                    "--no-call-home",
+                    "-i",
+                    f"--output={tmp}/%(channel)s - %(title)s.%(ext)s",
+                    prepare_url(url),
+                ]
             )
         except SystemExit:
             pass
-        print(os.listdir(tmp))
+        for file in glob.glob("*.mp3"):
+            with open(file, "rb") as mp3:
+                upload_download.delay(mp3.read(), user_id)
 
 
 @app.task
-def scrape_spotify(url: str):
+def scrape_spotify(url: str, user_id: str):
     with tempfile.TemporaryDirectory() as tmp:
         try:
             with mock.patch(
                 "argparse.ArgumentParser.parse_args",
                 return_value=argparse.Namespace(
                     operation="download",
-                    query=[url],
+                    query=[prepare_url(url)],
                     output=f"{tmp}",
                     output_format="mp3",
                     ffmpeg=shutil.which("ffmpeg"),
@@ -99,13 +108,35 @@ def scrape_spotify(url: str):
                 ),
             ):
                 spotdl()
-        except SystemExit as e:
-            raise e
-        print(os.listdir(tmp))
+        except SystemExit:
+            pass
+        for file in glob.glob("*.mp3"):
+            with open(file, "rb") as mp3:
+                upload_download.delay(mp3.read(), user_id)
 
 
 @app.task
-def upload_download(file: io.BytesIO) -> None:
-    pass
+def upload_download(file: bytes, user_id: str) -> None:
+    """Upload a file to the database."""
+    metadata = get_metadata(file)
+    with Session() as db:
+        title = metadata["title"]
+        artist = metadata["artist"]
+        year = metadata["year"]
+        genre = metadata["genre"]
+        duration = metadata["duration"]
+        cover = metadata["cover"]
+        content = file.read()
+
+        Song(
+            title=title,
+            artist=Artist(name=artist),
+            year=year,
+            genre=genre,
+            duration=duration,
+            cover=cover,
+            content=content,
+            uploaded_by=user_id,
+        ).create(db)
 
 scrape_spotify("https://open.spotify.com/track/4h9wh7iOZ0GGn8QVp4RAOB")
