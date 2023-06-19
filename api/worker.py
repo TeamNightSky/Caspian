@@ -2,11 +2,18 @@
 
 import io
 import os
+import tempfile
 from typing import Any
-import uuid
 import audio_metadata
 from celery import Celery
 import urllib.parse
+import shutil
+
+from unittest import mock
+import argparse
+
+import yt_dlp
+from spotdl.console import console_entry_point as spotdl
 
 
 app = Celery(
@@ -15,7 +22,6 @@ app = Celery(
     backend=os.environ["CELERY_BACKEND_URL"],
 )
 app.conf.result_backend = os.environ["CELERY_RESULT_BACKEND_URL"]
-
 
 
 def get_metadata(download: io.BytesIO) -> dict[str, Any]:
@@ -40,8 +46,8 @@ def prepare_url(url: str) -> str:
     return (
         urllib.parse.urlparse(url)
         ._replace(
-            scheme="https",
-            fragment="",
+            scheme="https", # Force HTTPS
+            fragment="", # Remove fragment
         )
         .geturl()
     )
@@ -49,14 +55,57 @@ def prepare_url(url: str) -> str:
 
 @app.task
 def scrape_youtube(url: str):
-    pass
+    """Scrape a YouTube video."""
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            yt_dlp.main([
+                "--add-metadata",
+                "--yes-playlist",
+                "-x",
+                "--audio-format=mp3",
+                "--audio-quality=0",
+                "--retries=infinite",
+                "--socket-timeout=30",
+                "--prefer-ffmpeg",
+                "--no-call-home",
+                "-i",
+                f'--output={tmp}/%(channel)s - %(title)s.%(ext)s',
+                url]
+            )
+        except SystemExit:
+            pass
+        print(os.listdir(tmp))
 
 
 @app.task
 def scrape_spotify(url: str):
-    pass
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            with mock.patch(
+                "argparse.ArgumentParser.parse_args",
+                return_value=argparse.Namespace(
+                    operation="download",
+                    query=[url],
+                    output=f"{tmp}",
+                    output_format="mp3",
+                    ffmpeg=shutil.which("ffmpeg"),
+                    ignore_ffmpeg_version=False,
+                    user_auth=None,
+                    debug_termination=False,
+                    use_youtube=True,
+                    generate_m3u=False,
+                    lyrics_provider="genius",
+                    search_threads=5,
+                ),
+            ):
+                spotdl()
+        except SystemExit as e:
+            raise e
+        print(os.listdir(tmp))
 
 
 @app.task
 def upload_download(file: io.BytesIO) -> None:
     pass
+
+scrape_spotify("https://open.spotify.com/track/4h9wh7iOZ0GGn8QVp4RAOB")
