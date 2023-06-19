@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .routes import scrapers_router, db_router
 
+from api import DEBUG
+
 
 app = FastAPI()
 
