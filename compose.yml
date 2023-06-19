@@ -30,9 +30,13 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
     depends_on:
       rest:
+        condition: service_healthy
       storage:
+        condition: service_healthy
       db:
+        condition: service_healthy
       kong:
+        condition: service_healthy
       caspian_worker:
         condition: service_healthy
   
@@ -86,8 +90,6 @@ services:
       retries: 3
       start_period: 15s
 
-
-
   studio:
     container_name: supabase-studio
     image: supabase/studio:20230228-029c7bd  # Latest is broken as of 03/13/2023
@@ -101,6 +103,9 @@ services:
       SUPABASE_REST_URL: ${EXTERNAL_DOMAIN}${PUBLIC_REST_URL}
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+
+      DEFAULT_ORGANIZATION_NAME: Caspian Org
+      DEFAULT_PROJECT_NAME: Caspian
 
   kong:
     container_name: supabase-kong
@@ -122,7 +127,8 @@ services:
     container_name: supabase-auth
     image: supabase/gotrue:v2.10.0
     depends_on:
-      - db # Disable this if you are using an external Postgres database
+      db:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       GOTRUE_API_HOST: 0.0.0.0
@@ -162,7 +168,8 @@ services:
     container_name: supabase-rest
     image: postgrest/postgrest:v9.0.0
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       PGRST_DB_URI: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
@@ -175,7 +182,8 @@ services:
     container_name: supabase-realtime
     image: supabase/realtime:v0.22.4
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       DB_HOST: ${POSTGRES_HOST}
@@ -199,8 +207,10 @@ services:
     container_name: supabase-storage
     image: supabase/storage-api:v0.10.0
     depends_on:
-      - db
-      - rest
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       ANON_KEY: ${ANON_KEY}
@@ -223,7 +233,8 @@ services:
     container_name: supabase-meta
     image: supabase/postgres-meta:v0.29.0
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       PG_META_PORT: 8080
