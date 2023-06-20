@@ -30,7 +30,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
     depends_on:
       rest:
-        condition: service_healthy
+        condition: service_started
       storage:
         condition: service_healthy
       db:
