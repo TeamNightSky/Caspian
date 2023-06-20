@@ -138,5 +138,3 @@ def upload_download(file: bytes, user_id: str) -> None:
             content=content,
             uploaded_by=user_id,
         ).create(db)
-
-scrape_spotify("https://open.spotify.com/track/4h9wh7iOZ0GGn8QVp4RAOB")
