@@ -128,7 +128,7 @@ def upload_download(file: bytes, user_id: str) -> None:
         cover = metadata["cover"]
         content = file.read()
 
-        Song(
+        song = Song(
             title=title,
             artist=Artist(name=artist),
             year=year,
@@ -137,4 +137,6 @@ def upload_download(file: bytes, user_id: str) -> None:
             cover=cover,
             content=content,
             uploaded_by=user_id,
-        ).create(db)
+        )
+        db.add(song)
+        db.commit()
