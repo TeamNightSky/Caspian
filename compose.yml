@@ -29,16 +29,11 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
     depends_on:
-      rest:
-        condition: service_started
-      storage:
-        condition: service_started
-      db:
-        condition: service_started
-      kong:
-        condition: service_started
-      caspian_worker:
-        condition: service_healthy
+      - db
+      - kong
+      - storage
+      - rest
+      - celery_worker
   
   caspian_worker:
     build:
@@ -55,40 +50,20 @@ services:
       CELERY_BROKER_URL: amqp://celery_broker:5672
       CELERY_RESULT_BACKEND_URL: redis://celery_backend:6379/0
     depends_on:
-      celery_backend:
-        condition: service_healthy
-      celery_broker:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "celery", "-A", "app.worker.tasks", "inspect", "ping"]
-      interval: 20s
-      timeout: 15s
-      retries: 3
-      start_period: 30s
+      - celery_broker
+      - celery_backend
 
   celery_backend:
     restart: always
     image: "redis:latest"
     ports:
       - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 20s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
 
   celery_broker:
     restart: always
     image: "rabbitmq:latest"
     ports:
       - "5672:5672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 20s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
 
   studio:
     container_name: supabase-studio
