@@ -33,7 +33,7 @@ services:
       - kong
       - storage
       - rest
-      - celery_worker
+      - caspian_worker
   
   caspian_worker:
     build:
