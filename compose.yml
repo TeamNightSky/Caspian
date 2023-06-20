@@ -34,9 +34,9 @@ services:
       storage:
         condition: service_started
       db:
-        condition: service_healthy
+        condition: service_started
       kong:
-        condition: service_healthy
+        condition: service_started
       caspian_worker:
         condition: service_healthy
   
