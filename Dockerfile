@@ -18,9 +18,14 @@ RUN python3 -m venv .venv; \
     rm -rf .venv pyproject.toml poetry.lock; \
     python3 -m pip install -q -r requirements.txt --no-deps --user;
 
-FROM python_dependencies as caspian_api
-EXPOSE ${CASPIAN_PORT}
 COPY ./api /app/api
+
+FROM python_dependencies as caspian_api
+
 ENTRYPOINT [ "python3", "-m", "api" ]
+
+FROM python_dependencies as caspian_worker
+
+ENTRYPOINT [ "celery", "-A", "api.worker", "worker", "-l", "info" ]
 
 

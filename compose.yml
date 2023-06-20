@@ -1,4 +1,4 @@
- services:
+services:
   caspian_api:
     container_name: caspian-api
     image: teamnightsky/caspian-api:dev
@@ -6,21 +6,9 @@
       context: .
       target: caspian_api
     volumes:
-      - type: bind
-        source: ./api
-        target: /app/api
-        volume:
-          nocopy: true
-      - type: bind
-        source: ./logs
-        target: /app/logs
-        volume:
-          nocopy: true
-      - type: bind
-        source: ./docker/volumes/downloads
-        target: /app/downloads
-        volume:
-          nocopy: true
+      - ./api:/app/api
+      - ./logs:/app/logs
+      - ./docker/volumes/downloads:/app/downloads
       - ./docker/volumes/api:/var/lib/kong
     restart: unless-stopped
     ports: 
@@ -32,13 +20,76 @@
       STORAGE_URL: http://storage:5000
       CASPIAN_DEBUG: ${CASPIAN_DEBUG}
       CASPIAN_DOMAIN: ${EXTERNAL_DOMAIN}
+      CELERY_BACKEND_URL: redis://celery_backend:6379/0
+      CELERY_BROKER_URL: amqp://celery_broker:5672
+      CELERY_RESULT_BACKEND_URL: redis://celery_backend:6379/0
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
     depends_on:
-      - rest
-      - storage
-      - db
-      - kong
+      rest:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      kong:
+        condition: service_healthy
+      caspian_worker:
+        condition: service_healthy
+  
+  caspian_worker:
+    build:
+      context: .
+      target: caspian_worker
+    image: teamnightsky/caspian-worker:dev
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      CELERY_BACKEND_URL: redis://celery_backend:6379/0
+      CELERY_BROKER_URL: amqp://celery_broker:5672
+      CELERY_RESULT_BACKEND_URL: redis://celery_backend:6379/0
+    depends_on:
+      celery_backend:
+        condition: service_healthy
+      celery_broker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.worker.tasks", "inspect", "ping"]
+      interval: 20s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
 
-  # ==== The rest below this is supabase ====
+  celery_backend:
+    restart: always
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  celery_broker:
+    restart: always
+    image: "rabbitmq:latest"
+    ports:
+      - "5672:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   studio:
     container_name: supabase-studio
     image: supabase/studio:20230228-029c7bd  # Latest is broken as of 03/13/2023
@@ -48,11 +99,16 @@
     environment:
       STUDIO_PG_META_URL: http://meta:8080
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
       SUPABASE_URL: http://kong:8000
       SUPABASE_REST_URL: ${EXTERNAL_DOMAIN}${PUBLIC_REST_URL}
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+
+      DEFAULT_ORGANIZATION_NAME: Caspian Org
+      DEFAULT_PROJECT_NAME: Caspian
+    depends_on:
+      - db
+      - kong
 
   kong:
     container_name: supabase-kong
@@ -74,7 +130,7 @@
     container_name: supabase-auth
     image: supabase/gotrue:v2.10.0
     depends_on:
-      - db # Disable this if you are using an external Postgres database
+      - db
     restart: unless-stopped
     environment:
       GOTRUE_API_HOST: 0.0.0.0
@@ -169,11 +225,7 @@
       REGION: stub
       GLOBAL_S3_BUCKET: stub
     volumes:
-      - type: bind
-        source: ./docker/volumes/storage
-        target: /var/lib/storage
-        volume:
-          nocopy: true
+      - ./docker/volumes/storage:/var/lib/storage
 
   meta:
     container_name: supabase-meta
@@ -199,13 +251,5 @@
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - type: bind
-        source: ./docker/volumes/db/data
-        target: /var/lib/postgresql/data
-        volume:
-          nocopy: true
-      - type: bind
-        source: ./docker/volumes/db/init
-        target: /docker-entrypoint-initdb.d
-        volume:
-          nocopy: true
+      - ./docker/volumes/db/data:/var/lib/postgresql/data
+      - ./docker/volumes/db/init:/docker-entrypoint-initdb.d
