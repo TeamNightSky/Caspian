@@ -1,8 +1,8 @@
 """Celery app for scraping and saving data to database."""
 
 import glob
-import io
 import os
+from pathlib import Path
 import tempfile
 from typing import Any
 import audio_metadata
@@ -81,9 +81,10 @@ def scrape_youtube(url: str, user_id: str):
             )
         except SystemExit:
             pass
-        for file in glob.glob("*.mp3"):
+        for file in Path(tmp).glob("*.mp3"):
             with open(file, "rb") as mp3:
                 upload_download.delay(mp3.read(), user_id)
+        return [file.name for file in Path(tmp).glob("*.mp3")]
 
 
 @app.task
@@ -110,9 +111,10 @@ def scrape_spotify(url: str, user_id: str):
                 spotdl()
         except SystemExit:
             pass
-        for file in glob.glob("*.mp3"):
+        for file in Path(tmp).glob("*.mp3"):
             with open(file, "rb") as mp3:
                 upload_download.delay(mp3.read(), user_id)
+        return [file.name for file in Path(tmp).glob("*.mp3")]
 
 
 @app.task
@@ -126,7 +128,6 @@ def upload_download(file: bytes, user_id: str) -> None:
         genre = metadata["genre"]
         duration = metadata["duration"]
         cover = metadata["cover"]
-        content = file.read()
 
         song = Song(
             title=title,
@@ -135,8 +136,9 @@ def upload_download(file: bytes, user_id: str) -> None:
             genre=genre,
             duration=duration,
             cover=cover,
-            content=content,
+            content=file,
             uploaded_by=user_id,
         )
         db.add(song)
         db.commit()
+        return song.id, song.title, song.artist.name
