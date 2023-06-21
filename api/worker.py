@@ -9,6 +9,7 @@ import audio_metadata
 from celery import Celery
 import urllib.parse
 import shutil
+from storage3 import create_client
 
 from unittest import mock
 import argparse
@@ -25,6 +26,9 @@ app = Celery(
 )
 app.conf.result_backend = os.environ["CELERY_RESULT_BACKEND_URL"]
 
+headers = {"apiKey": os.environ['SUPABASE_KEY'], "Authorization": f"Bearer {os.environ['SUPABASE_KEY']}"}
+storage_client = create_client(os.environ['STORAGE_URL'], headers, is_async=False)
+# TODO: Switch to async
 
 def get_metadata(download: bytes) -> dict[str, Any]:
     """Return the metadata for the downloaded mp3 file."""
@@ -67,6 +71,7 @@ def scrape_youtube(url: str, user_id: str):
                 [
                     "--add-metadata",
                     "--yes-playlist",
+                    "--write-thumbnail",
                     "-x",
                     "--audio-format=mp3",
                     "--audio-quality=0",
@@ -83,7 +88,9 @@ def scrape_youtube(url: str, user_id: str):
             pass
         for file in Path(tmp).glob("*.mp3"):
             with open(file, "rb") as mp3:
-                upload_download.delay(mp3.read(), user_id)
+                coverpath = Path(str(file).replace(".mp3", ".jpg"))
+                with open(coverpath, "rb") as cover:
+                    upload_download.delay(mp3.read(), user_id, cover.read())
         return [file.name for file in Path(tmp).glob("*.mp3")]
 
 
@@ -118,7 +125,7 @@ def scrape_spotify(url: str, user_id: str):
 
 
 @app.task
-def upload_download(file: bytes, user_id: str) -> None:
+def upload_download(file: bytes, user_id: str, cover: bytes = None) -> None:
     """Upload a file to the database."""
     metadata = get_metadata(file)
     with Session() as db:
@@ -127,7 +134,8 @@ def upload_download(file: bytes, user_id: str) -> None:
         year = metadata["year"]
         genre = metadata["genre"]
         duration = metadata["duration"]
-        cover = metadata["cover"]
+        if cover is None:
+            cover = metadata["cover"]
 
         song = Song(
             title=title,
@@ -135,10 +143,22 @@ def upload_download(file: bytes, user_id: str) -> None:
             year=year,
             genre=genre,
             duration=duration,
-            cover=cover,
-            content=file,
             uploaded_by=user_id,
         )
         db.add(song)
         db.commit()
+
+        if cover is not None:
+            storage_client.from_("files").upload(
+                f"cover/{song.id}.jpg",
+                cover,
+                {"content-type": "image/jpg"}
+            )
+        # TODO: Default cover
+        
+        storage_client.from_("files").upload(
+            f"song/{song.id}.mp3",
+            file,
+            {"content-type": "audio/mpeg"}
+        )
         return song.id, song.title, song.artist.name

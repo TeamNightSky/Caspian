@@ -1,3 +1,4 @@
 volumes/db/init/data.sql
 volumes/db/data
+volumes/storage/stub/stub/files
 test.http
