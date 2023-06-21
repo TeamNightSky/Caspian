@@ -48,6 +48,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
+      SUPABASE_KEY: ${SERVICE_ROLE_KEY}
+      STORAGE_URL: http://storage:5000
       CELERY_BACKEND_URL: redis://celery_backend:6379/0
       CELERY_BROKER_URL: amqp://celery_broker:5672
       CELERY_RESULT_BACKEND_URL: redis://celery_backend:6379/0

@@ -108,9 +108,6 @@ class Song(Base):
     genre = Column(Text)
     duration = Column(Float)
 
-    content = Column(LargeBinary, nullable=False)
-    cover = Column(LargeBinary)
-
     uploaded_by = Column(
         UUID(as_uuid=True), ForeignKey("auth.users.id")
     )
