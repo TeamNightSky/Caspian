@@ -82,17 +82,6 @@ class Artist(Base):
     songs: Mapped[list["Song"]] = relationship(back_populates="artist")
 
 
-class Playlist(Base):
-    __tablename__ = "playlists"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, unique=True)
-    cover = Column(LargeBinary)
-
-    owner_id = Column(UUID, ForeignKey("auth.users.id"), nullable=False)
-    songs: Mapped[list["Song"]] = relationship("Song", secondary="playlist_songs")
-
-
 class Play(Base):
     __tablename__ = "plays"
 
@@ -101,6 +90,8 @@ class Play(Base):
     timestamp = Column(DateTime, nullable=False)
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth.users.id"), nullable=False)
+    user: Mapped["User"] = relationship()
+
     song: Mapped["Song"] = relationship("Song", back_populates="plays")
 
 
@@ -121,7 +112,7 @@ class Song(Base):
     cover = Column(LargeBinary)
 
     uploaded_by = Column(
-        UUID(as_uuid=True), ForeignKey("auth.users.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("auth.users.id")
     )
     artist: Mapped[Artist] = relationship("Artist", back_populates="songs")
 
