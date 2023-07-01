@@ -17,7 +17,7 @@ import argparse
 import yt_dlp
 from spotdl.console import console_entry_point as spotdl
 
-from .models import Song, Artist, User, Session
+from .models import Song, Artist, Session
 
 app = Celery(
     "scraper",
@@ -147,6 +147,9 @@ def upload_download(file: bytes, user_id: str, cover: bytes = None) -> None:
         )
         db.add(song)
         db.commit()
+
+        if "files" not in storage_client.list_buckets():
+            storage_client.create_bucket("files")
 
         if cover is not None:
             storage_client.from_("files").upload(

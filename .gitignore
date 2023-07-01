@@ -1,6 +1,7 @@
 # Logs and other per-instance data
 logs/*
 docker/volumes/db/data*
+volumes/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

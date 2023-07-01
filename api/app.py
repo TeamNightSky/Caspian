@@ -16,8 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/api", scrapers_router)
-app.mount("/api", db_router)
+app.include_router(scrapers_router)
+app.include_router(db_router)
 
 
 @app.on_event("startup")
