@@ -27,7 +27,7 @@ app = Celery(
 app.conf.result_backend = os.environ["CELERY_RESULT_BACKEND_URL"]
 
 headers = {"apiKey": os.environ['SUPABASE_KEY'], "Authorization": f"Bearer {os.environ['SUPABASE_KEY']}"}
-storage_client = create_client(os.environ['STORAGE_URL'], headers, is_async=False)
+storage_client = create_client(os.environ['SUPABASE_URL'] + "/storage/v1/", headers, is_async=False)
 # TODO: Switch to async
 
 def get_metadata(download: bytes) -> dict[str, Any]:
