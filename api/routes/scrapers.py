@@ -11,16 +11,18 @@ router = APIRouter(prefix="/import")
 
 PUBLIC = bool(os.environ.get("CASPIAN_PUBLIC", "false").strip().lower() == "true")
 
+
 def verify(auth: str):
     if PUBLIC:
         return True, None  # TODO: Create anonymous and superuser users
     try:
-        payload = jwt.decode(auth, os.environ['JWT_SECRET'], algorithms=['HS256'])
-        if role == 'service_role':
+        payload = jwt.decode(auth, os.environ["JWT_SECRET"], algorithms=["HS256"])
+        if role == "service_role":
             return True, None
-        return True, payload['sub']
+        return True, payload["sub"]
     except jwt.exceptions.InvalidTokenError:
         return False, None
+
 
 @router.post("/youtube")
 async def youtube_scraper(url: str, authorization: str = None):
@@ -50,4 +52,3 @@ async def upload_file(file: UploadFile, authorization: str = None):
     valid, user_id = verify(authorization)
     if valid:
         upload_download.delay(file.file.read(), user_id)
-

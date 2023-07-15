@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import enum
+import uuid
 from sqlalchemy import (
     UUID,
     Boolean,
@@ -57,9 +58,7 @@ class Play(Base):
     timestamp = Column(DateTime, nullable=False)
 
     user_id = Column(UUID(as_uuid=True), nullable=False)
-    user: Mapped["User"] = relationship()
-
-    song: Mapped["Song"] = relationship("Song", back_populates="plays")
+    song: Mapped["Song"] = relationship(foreign_keys=[song_id], back_populates="plays")
 
 
 class Song(Base):
@@ -68,17 +67,18 @@ class Song(Base):
     id: int = Column(Integer, primary_key=True)
     title: str = Column(Text, nullable=False)
 
-    artist_id: str = Column(Integer, nullable=False)
+    artist_id: str = Column(
+        ForeignKey("artists.id"),
+        nullable=False,
+    )
 
     plays: Mapped[list[Play]] = relationship(back_populates="song")
     year = Column(Integer)
     genre = Column(Text)
     duration = Column(Float)
 
-    uploaded_by = Column(
-        UUID(as_uuid=True)
-    )
-    artist: Mapped[Artist] = relationship("Artist", back_populates="songs")
+    uploaded_by: uuid.UUID = Column(UUID, ForeignKey("auth.users.id"), nullable=False)
+    artist: Mapped[Artist] = relationship(back_populates="songs")
 
 
 class JobType(enum.Enum):

@@ -26,9 +26,15 @@ app = Celery(
 )
 app.conf.result_backend = os.environ["CELERY_RESULT_BACKEND_URL"]
 
-headers = {"apiKey": os.environ['SUPABASE_KEY'], "Authorization": f"Bearer {os.environ['SUPABASE_KEY']}"}
-storage_client = create_client(os.environ['SUPABASE_URL'] + "/storage/v1/", headers, is_async=False)
+headers = {
+    "apiKey": os.environ["SUPABASE_KEY"],
+    "Authorization": f"Bearer {os.environ['SUPABASE_KEY']}",
+}
+storage_client = create_client(
+    os.environ["SUPABASE_URL"] + "/storage/v1/", headers, is_async=False
+)
 # TODO: Switch to async
+
 
 def get_metadata(download: bytes) -> dict[str, Any]:
     """Return the metadata for the downloaded mp3 file."""
@@ -153,15 +159,11 @@ def upload_download(file: bytes, user_id: str, cover: bytes = None) -> None:
 
         if cover is not None:
             storage_client.from_("files").upload(
-                f"cover/{song.id}.jpg",
-                cover,
-                {"content-type": "image/jpg"}
+                f"cover/{song.id}.jpg", cover, {"content-type": "image/jpg"}
             )
         # TODO: Default cover
-        
+
         storage_client.from_("files").upload(
-            f"song/{song.id}.mp3",
-            file,
-            {"content-type": "audio/mpeg"}
+            f"song/{song.id}.mp3", file, {"content-type": "audio/mpeg"}
         )
         return song.id, song.title, song.artist.name
